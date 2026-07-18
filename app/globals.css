@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-cinzel: "Cinzel";
+  --font-cormorant: "Cormorant Garamond";
+  --font-poppins: "Poppins";
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-noir text-creme font-poppins antialiased;
+  }
+  ::selection {
+    @apply bg-or/30 text-creme;
+  }
+}
+
+@layer components {
+  .container-lux {
+    @apply mx-auto w-full max-w-7xl px-6 md:px-10;
+  }
+  .heading-lux {
+    @apply font-cinzel uppercase tracking-[0.15em];
+  }
+  .subheading-lux {
+    @apply font-cormorant italic text-or;
+  }
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-or px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-noir transition-all duration-300 hover:bg-or-clair hover:shadow-[0_0_30px_rgba(212,175,55,0.35)];
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-or/60 px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-or transition-all duration-300 hover:border-or hover:bg-or hover:text-noir;
+  }
+  .gold-line {
+    @apply h-px w-16 bg-gradient-to-r from-transparent via-or to-transparent;
+  }
+}
+
+/* Fine golden scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0b0b;
+}
+::-webkit-scrollbar-thumb {
+  background: #3a3320;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(90deg, #d4af37, #f3e3a3, #d4af37);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
