@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel, Cormorant_Garamond, Poppins } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import SmoothScroll from "@/components/SmoothScroll";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import AppChrome from "@/components/AppChrome";
 import { site } from "@/lib/site";
 
 const cinzel = Cinzel({
@@ -94,11 +91,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <SmoothScroll />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-        <WhatsAppButton />
+        <AppChrome>{children}</AppChrome>
       </body>
     </html>
   );
