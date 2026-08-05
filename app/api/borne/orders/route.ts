@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     console.log("[BORNE] Nouvelle demande:", JSON.stringify(order, null, 2));
 
-    // Message + notification WhatsApp à la réception (77 921 55 24).
+    // Message + notification WhatsApp à la réception (77 907 46 46).
     const message = formatBorneOrderMessage(order);
     const waResult = await sendReceptionWhatsapp(message);
     const waMeUrl = buildWaMeUrl(message);
