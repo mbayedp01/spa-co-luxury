@@ -161,6 +161,11 @@ export default function BornePage() {
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Erreur");
       setOrderId(data.order.id);
+      // Fallback WhatsApp : si l'envoi automatique n'est pas configuré,
+      // on ouvre wa.me pour que l'hôtesse confirme d'un tap.
+      if (data.whatsapp && !data.whatsapp.sent && data.whatsapp.waMeUrl) {
+        window.open(data.whatsapp.waMeUrl, "_blank", "noopener");
+      }
       setStep("success");
       // Retour auto à l'accueil après 30s sur l'écran de confirmation
       setTimeout(() => resetKiosk(), 30_000);

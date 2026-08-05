@@ -5,8 +5,11 @@ export const site = {
   description:
     "Spa de luxe à Dakar. Massages, soins du visage, hammam, onglerie, coiffure et rituels premium dans un écrin de sérénité. Réservez votre parenthèse de bien-être.",
   url: "https://spa-co-luxury.vercel.app",
-  phone: "+221 77 000 00 00",
-  whatsapp: "221770000000",
+  phone: "+221 77 921 55 24",
+  whatsapp: "221779215524",
+  // Numéro WhatsApp qui reçoit les demandes envoyées depuis la borne
+  // interactive du spa (Smart Screen 32"). Format international sans +.
+  borneReceptionWhatsapp: "221779215524",
   email: "contact@spa-co-luxury.com",
   address: "Almadies, Dakar, Sénégal",
   hours: [

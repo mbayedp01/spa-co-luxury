@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
+import {
+  buildWaMeUrl,
+  formatBorneOrderMessage,
+  sendReceptionWhatsapp,
+} from "@/lib/whatsapp";
 
 // Endpoint qui reçoit les demandes envoyées depuis la borne 32".
-// À brancher ensuite sur : Supabase (table `borne_orders`), Resend (email
-// caissière), ou webhook du logiciel de gestion (Odoo/Sage/etc.).
-//
-// TODO intégration réelle :
-//   1. Insérer dans Supabase → table `borne_orders`
-//   2. Notifier la caisse via WebSocket / SSE
-//   3. Envoyer email + WhatsApp à la réception
+// Notifie la réception par WhatsApp (au numéro configuré dans lib/site.ts)
+// et peut relayer la commande vers un logiciel de gestion via webhook.
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
     const { customer, items, total } = body ?? {};
 
     if (!customer?.name || !customer?.phone) {
@@ -36,11 +35,14 @@ export async function POST(request: Request) {
       total,
     };
 
-    // Log console (visible dans les logs Vercel).
-    // eslint-disable-next-line no-console
     console.log("[BORNE] Nouvelle demande:", JSON.stringify(order, null, 2));
 
-    // Webhook optionnel vers le logiciel de gestion.
+    // Message + notification WhatsApp à la réception (77 921 55 24).
+    const message = formatBorneOrderMessage(order);
+    const waResult = await sendReceptionWhatsapp(message);
+    const waMeUrl = buildWaMeUrl(message);
+
+    // Webhook optionnel vers le logiciel de gestion (Odoo/Sage/etc.).
     const webhook = process.env.BORNE_WEBHOOK_URL;
     if (webhook) {
       try {
@@ -54,7 +56,17 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, order });
+    return NextResponse.json({
+      ok: true,
+      order,
+      whatsapp: {
+        sent: waResult.ok,
+        provider: waResult.provider,
+        // La borne utilisera cette URL pour ouvrir WhatsApp Web/App si
+        // l'envoi automatique n'est pas configuré.
+        waMeUrl,
+      },
+    });
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: "Requête invalide" },
