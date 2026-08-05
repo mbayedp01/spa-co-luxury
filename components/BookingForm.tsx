@@ -3,8 +3,19 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ChevronLeft, ChevronRight, CalendarCheck } from "lucide-react";
-import { services } from "@/lib/services";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CalendarCheck,
+  Clock,
+} from "lucide-react";
+import {
+  borneCategories,
+  servicesByCategory,
+  formatFCFA,
+  type BorneService,
+} from "@/lib/borne-catalog";
 
 const employees = [
   "Sans préférence",
@@ -24,11 +35,16 @@ const steps = ["Prestation", "Date & Heure", "Coordonnées", "Confirmation"];
 
 export default function BookingForm() {
   const params = useSearchParams();
-  const preselected = params.get("service");
+  const preselectedName = params.get("service");
+  const preselectedPrice = params.get("price");
+  const preselectedDuration = params.get("duration");
 
   const [step, setStep] = useState(0);
+  const [category, setCategory] = useState<string | null>(null);
   const [data, setData] = useState({
-    service: preselected || "",
+    serviceName: preselectedName || "",
+    servicePrice: preselectedPrice ? Number(preselectedPrice) : undefined,
+    serviceDuration: preselectedDuration || "",
     date: "",
     time: "",
     employee: employees[0],
@@ -45,8 +61,17 @@ export default function BookingForm() {
 
   const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
 
+  function selectService(s: BorneService) {
+    setData((d) => ({
+      ...d,
+      serviceName: s.name,
+      servicePrice: s.price,
+      serviceDuration: s.duration,
+    }));
+  }
+
   const canNext =
-    (step === 0 && data.service) ||
+    (step === 0 && data.serviceName) ||
     (step === 1 && data.date && data.time) ||
     (step === 2 && data.name && data.email && data.phone);
 
@@ -59,7 +84,9 @@ export default function BookingForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: { name: data.name, phone: data.phone, email: data.email },
-          service: services.find((s) => s.slug === data.service)?.name || data.service,
+          service: data.serviceName,
+          price: data.servicePrice,
+          duration: data.serviceDuration,
           date: data.date,
           time: data.time,
           employee: data.employee,
@@ -118,31 +145,84 @@ export default function BookingForm() {
       <div className="rounded-3xl border border-or/15 bg-noir/40 p-6 md:p-10">
         <AnimatePresence mode="wait">
           <motion.div
-            key={step}
+            key={`${step}-${category ?? "none"}`}
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Step 0 - Prestation */}
-            {step === 0 && (
+            {/* Step 0 - Prestation (catégorie puis prestation exacte) */}
+            {step === 0 && !category && (
               <div className="flex flex-col gap-5">
                 <h3 className="heading-lux text-xl text-creme">
-                  Choisissez votre prestation
+                  Choisissez une catégorie
                 </h3>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {services.map((s) => (
+                {data.serviceName && (
+                  <button
+                    onClick={() => set("serviceName", data.serviceName)}
+                    className="flex items-center justify-between rounded-2xl border border-or bg-or/10 p-4 text-left"
+                  >
+                    <span className="text-sm text-creme">
+                      Sélection actuelle : {data.serviceName}
+                    </span>
+                    {data.servicePrice && (
+                      <span className="text-xs text-or">
+                        {formatFCFA(data.servicePrice)}
+                      </span>
+                    )}
+                  </button>
+                )}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {borneCategories.map((cat) => (
                     <button
-                      key={s.slug}
-                      onClick={() => set("service", s.slug)}
-                      className={`flex flex-col items-start gap-1 rounded-2xl border p-4 text-left transition-all ${
-                        data.service === s.slug
+                      key={cat.slug}
+                      onClick={() => setCategory(cat.slug)}
+                      className="flex flex-col items-center gap-2 rounded-2xl border border-or/20 p-4 text-center transition-all hover:border-or/60 hover:bg-or/5"
+                    >
+                      <span className="text-2xl">{cat.icon}</span>
+                      <span className="text-xs text-creme">{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 0 && category && (
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="heading-lux text-xl text-creme">
+                    {borneCategories.find((c) => c.slug === category)?.name}
+                  </h3>
+                  <button
+                    onClick={() => setCategory(null)}
+                    className="text-xs uppercase tracking-widest text-creme/60 hover:text-or"
+                  >
+                    Changer de catégorie
+                  </button>
+                </div>
+                <div className="flex max-h-[420px] flex-col gap-3 overflow-y-auto pr-1">
+                  {servicesByCategory(category).map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => selectService(s)}
+                      className={`flex items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-all ${
+                        data.serviceName === s.name
                           ? "border-or bg-or/10"
                           : "border-or/20 hover:border-or/50"
                       }`}
                     >
-                      <span className="text-sm text-creme">{s.name}</span>
-                      <span className="text-xs text-or">{s.price}</span>
+                      <div className="flex-1">
+                        <p className="text-sm text-creme">{s.name}</p>
+                        <p className="mt-1 text-xs text-creme/50">
+                          {s.description}
+                        </p>
+                        <p className="mt-1 flex items-center gap-1 text-[0.65rem] uppercase tracking-widest text-creme/40">
+                          <Clock size={11} /> {s.duration}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm text-or">
+                        {formatFCFA(s.price)}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -261,12 +341,10 @@ export default function BookingForm() {
                   email et WhatsApp dans les plus brefs délais.
                 </p>
                 <div className="w-full max-w-sm rounded-2xl border border-or/20 bg-noir/60 p-6 text-left text-sm">
-                  <Row
-                    label="Prestation"
-                    value={
-                      services.find((s) => s.slug === data.service)?.name || "—"
-                    }
-                  />
+                  <Row label="Prestation" value={data.serviceName || "—"} />
+                  {data.servicePrice && (
+                    <Row label="Tarif" value={formatFCFA(data.servicePrice)} />
+                  )}
                   <Row label="Date" value={data.date || "—"} />
                   <Row label="Heure" value={data.time || "—"} />
                   <Row label="Thérapeute" value={data.employee} />

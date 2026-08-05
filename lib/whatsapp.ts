@@ -45,6 +45,8 @@ export function formatOnlineReservationMessage(reservation: {
   id: string;
   customer: { name: string; phone: string; email?: string };
   service: string;
+  price?: number;
+  duration?: string;
   date: string;
   time: string;
   employee?: string;
@@ -62,6 +64,8 @@ export function formatOnlineReservationMessage(reservation: {
       : []),
     ``,
     `🧾 *Prestation :* ${reservation.service}`,
+    ...(reservation.price ? [`💰 *Tarif :* ${fcfa(reservation.price)}`] : []),
+    ...(reservation.duration ? [`⏱️ *Durée :* ${reservation.duration}`] : []),
     `📅 *Date souhaitée :* ${reservation.date}`,
     `🕐 *Heure souhaitée :* ${reservation.time}`,
     ...(reservation.employee

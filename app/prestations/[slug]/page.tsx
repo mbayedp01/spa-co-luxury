@@ -123,7 +123,7 @@ export default async function ServicePage({
             <Reveal delay={0.25}>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={`/reservation?service=${service.slug}`}
+                  href={`/reservation?service=${encodeURIComponent(service.name)}`}
                   className="btn-gold"
                 >
                   Réserver ce soin

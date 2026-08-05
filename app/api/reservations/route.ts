@@ -12,7 +12,8 @@ import {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customer, service, date, time, employee, notes } = body ?? {};
+    const { customer, service, price, duration, date, time, employee, notes } =
+      body ?? {};
 
     if (!customer?.name || !customer?.phone) {
       return NextResponse.json(
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
       customer,
       service,
+      price,
+      duration,
       date,
       time,
       employee,
