@@ -38,6 +38,9 @@ export default function BookingForm() {
     notes: "",
   });
 
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const today = new Date().toISOString().split("T")[0];
 
   const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
@@ -47,7 +50,41 @@ export default function BookingForm() {
     (step === 1 && data.date && data.time) ||
     (step === 2 && data.name && data.email && data.phone);
 
-  const next = () => setStep((s) => Math.min(s + 1, 3));
+  async function submitReservation() {
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { name: data.name, phone: data.phone, email: data.email },
+          service: services.find((s) => s.slug === data.service)?.name || data.service,
+          date: data.date,
+          time: data.time,
+          employee: data.employee,
+          notes: data.notes || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || "Erreur");
+      setStep(3);
+    } catch (e: any) {
+      setSubmitError(
+        e.message || "Impossible d'envoyer votre demande. Réessayez."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const next = () => {
+    if (step === 2) {
+      submitReservation();
+      return;
+    }
+    setStep((s) => Math.min(s + 1, 3));
+  };
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   return (
@@ -201,6 +238,11 @@ export default function BookingForm() {
                   rows={3}
                   className="rounded-xl border border-or/30 bg-noir/60 px-4 py-3 text-sm text-creme placeholder:text-creme/40 outline-none focus:border-or"
                 />
+                {submitError && (
+                  <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+                    {submitError}
+                  </p>
+                )}
               </div>
             )}
 
@@ -243,17 +285,17 @@ export default function BookingForm() {
           <div className="mt-8 flex items-center justify-between">
             <button
               onClick={back}
-              disabled={step === 0}
+              disabled={step === 0 || submitting}
               className="flex items-center gap-1 text-sm text-creme/60 transition-colors hover:text-or disabled:opacity-30"
             >
               <ChevronLeft size={16} /> Retour
             </button>
             <button
               onClick={next}
-              disabled={!canNext}
+              disabled={!canNext || submitting}
               className="btn-gold disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {step === 2 ? "Confirmer" : "Continuer"}
+              {submitting ? "Envoi en cours…" : step === 2 ? "Confirmer" : "Continuer"}
               <ChevronRight size={16} />
             </button>
           </div>

@@ -1,6 +1,15 @@
 import { site } from "./site";
 
-// Formate un récap de commande pour WhatsApp (lisible dans l'app native).
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString("fr-FR", { timeZone: "Africa/Dakar" });
+}
+function fcfa(n: number) {
+  return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+}
+
+// Message pour une commande passée depuis la BORNE 32" installée à
+// l'entrée du spa. Le client est physiquement sur place : la réception
+// doit l'accueillir directement, pas le rappeler.
 export function formatBorneOrderMessage(order: {
   id: string;
   customer: { name: string; phone: string };
@@ -9,26 +18,62 @@ export function formatBorneOrderMessage(order: {
   createdAt: string;
 }) {
   const lines = [
-    `🌿 *SPA & CO LUXURY — Nouvelle demande borne*`,
+    `📍 *CLIENT SUR PLACE — Borne accueil*`,
+    `🌿 SPA & CO LUXURY`,
     ``,
     `👤 *Client :* ${order.customer.name}`,
     `📞 *Téléphone :* ${order.customer.phone}`,
     ``,
-    `🧾 *Prestations :*`,
-    ...order.items.map(
-      (i) =>
-        `• ${i.qty}× ${i.name} — ${new Intl.NumberFormat("fr-FR").format(
-          i.price * i.qty
-        )} FCFA`
-    ),
+    `🧾 *Prestations sélectionnées :*`,
+    ...order.items.map((i) => `• ${i.qty}× ${i.name} — ${fcfa(i.price * i.qty)}`),
     ``,
-    `💰 *TOTAL : ${new Intl.NumberFormat("fr-FR").format(order.total)} FCFA*`,
+    `💰 *TOTAL : ${fcfa(order.total)}*`,
     ``,
     `📌 Réf : ${order.id}`,
-    `🕐 ${new Date(order.createdAt).toLocaleString("fr-FR", {
-      timeZone: "Africa/Dakar",
-    })}`,
+    `🕐 ${formatDate(order.createdAt)}`,
     `Statut : ⏳ En attente`,
+    ``,
+    `⚡ *Le client est actuellement à l'accueil — merci de l'accueillir directement.*`,
+  ];
+  return lines.join("\n");
+}
+
+// Message pour une demande de réservation faite à DISTANCE depuis le site
+// web (n'importe où). Le client n'est pas sur place : la réception doit le
+// rappeler pour confirmer le créneau.
+export function formatOnlineReservationMessage(reservation: {
+  id: string;
+  customer: { name: string; phone: string; email?: string };
+  service: string;
+  date: string;
+  time: string;
+  employee?: string;
+  notes?: string;
+  createdAt: string;
+}) {
+  const lines = [
+    `💻 *RÉSERVATION EN LIGNE — Site web*`,
+    `🌿 SPA & CO LUXURY`,
+    ``,
+    `👤 *Client :* ${reservation.customer.name}`,
+    `📞 *Téléphone :* ${reservation.customer.phone}`,
+    ...(reservation.customer.email
+      ? [`✉️ *Email :* ${reservation.customer.email}`]
+      : []),
+    ``,
+    `🧾 *Prestation :* ${reservation.service}`,
+    `📅 *Date souhaitée :* ${reservation.date}`,
+    `🕐 *Heure souhaitée :* ${reservation.time}`,
+    ...(reservation.employee
+      ? [`💆 *Thérapeute :* ${reservation.employee}`]
+      : []),
+    ...(reservation.notes ? [`📝 *Notes :* ${reservation.notes}`] : []),
+    ``,
+    `📌 Réf : ${reservation.id}`,
+    `🕐 Reçu le ${formatDate(reservation.createdAt)}`,
+    `Statut : ⏳ À confirmer`,
+    ``,
+    `☎️ *Le client n'est PAS sur place — merci de le rappeler pour confirmer ce créneau.*`,
   ];
   return lines.join("\n");
 }
